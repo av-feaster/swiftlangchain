@@ -24,4 +24,6 @@ public protocol CombinableChain: Chain {
         with other: Next
     ) -> SequentialChain<Self, Next>
     where Self.Output == Next.Input
+    
+    
 }

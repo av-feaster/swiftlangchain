@@ -10,6 +10,7 @@ import Foundation
 
 /// Basic chain that combines a prompt template with an LLM provider
 public struct LLMChain: Chain, CombinableChain {
+    
     public typealias Input = [String: String]
     public typealias Output = String
     
@@ -32,7 +33,8 @@ public struct LLMChain: Chain, CombinableChain {
         return try await llmProvider.generate(prompt: formattedPrompt, parameters: parameters)
     }
     
-    public func combine<T: CombinableChain>(with other: T) -> SequentialChain<Input, Output, T.Output> {
-        return SequentialChain(chains: [self, other])
+    public func combine<Next>(with other: Next) -> SequentialChain<LLMChain, Next> where Next : CombinableChain, String == Next.Input {
+        return SequentialChain.init(first: self, second: other)
     }
+    
 }

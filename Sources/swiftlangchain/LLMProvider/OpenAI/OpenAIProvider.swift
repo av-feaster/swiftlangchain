@@ -9,9 +9,9 @@ import Foundation
 
 /// OpenAI API provider implementation
 public struct OpenAIProvider: LLMProvider {
-    private let apiKey: String
-    private let baseURL: String
-    private let model: String
+    let apiKey: String
+    let baseURL: String
+    let model: String
     
     public init(apiKey: String, model: String = "gpt-3.5-turbo", baseURL: String = "https://api.openai.com/v1") {
         self.apiKey = apiKey
@@ -81,5 +81,8 @@ public struct OpenAIProvider: LLMProvider {
             throw NetworkError.requestFailed(error)
         }
     }
+    
+    
+    
 }
 
