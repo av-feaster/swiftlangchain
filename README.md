@@ -1,6 +1,6 @@
 # SwiftLangChain
 
-SwiftLangChain is a composable framework for building AI agents, tools, and prompt chains on Apple platforms using LLMs like OpenAI, Claude, and local models.
+[SwiftLangChain](https://forums.swift.org/t/swiftlangchain-is-here/81346) is a composable framework for building AI agents, tools, and prompt chains on Apple platforms using LLMs like OpenAI, Claude, and local models.
 
 ## 🚀 Features
 
