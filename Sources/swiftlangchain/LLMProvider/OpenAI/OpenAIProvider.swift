@@ -24,6 +24,21 @@ public struct OpenAIProvider: LLMProvider {
     }
     
     public func generate(prompt: String, parameters: GenerationParameters) async throws -> String {
+        // Convert text prompt to ChatMessage and then to OpenAIMessage
+        let chatMessage = ChatMessage(role: .user, content: prompt)
+        let openAIMessage = convertChatMessageToOpenAI(chatMessage)
+        
+        return try await generateWithMessages([openAIMessage], parameters: parameters)
+    }
+    
+    /// Generate response with ChatMessages (supports images)
+    public func generateWithMessages(_ messages: [ChatMessage], parameters: GenerationParameters = GenerationParameters()) async throws -> String {
+        let openAIMessages = messages.map { convertChatMessageToOpenAI($0) }
+        return try await generateWithMessages(openAIMessages, parameters: parameters)
+    }
+    
+    /// Generate response with OpenAIMessages
+    public func generateWithMessages(_ messages: [OpenAIMessage], parameters: GenerationParameters = GenerationParameters()) async throws -> String {
         // Construct the API URL
         guard let url = URL(string: "\(baseURL)/chat/completions") else {
             throw NetworkError.invalidURL
@@ -38,9 +53,40 @@ public struct OpenAIProvider: LLMProvider {
         // Create the request body
         let requestBody: [String: Any] = [
             "model": model,
-            "messages": [
-                ["role": "user", "content": prompt]
-            ],
+            "messages": messages.map { message in
+                var messageDict: [String: Any] = ["role": message.role]
+                
+                switch message.content {
+                case .text(let text):
+                    messageDict["content"] = text
+                case .image(let imageUrl):
+                    messageDict["content"] = [
+                        [
+                            "type": "image_url",
+                            "image_url": [
+                                "url": imageUrl.url,
+                                "detail": imageUrl.detail
+                            ].compactMapValues { $0 }
+                        ]
+                    ]
+                case .array(let items):
+                    messageDict["content"] = items.map { item in
+                        var itemDict: [String: Any] = ["type": item.type]
+                        if let text = item.text {
+                            itemDict["text"] = text
+                        }
+                        if let imageUrl = item.imageUrl {
+                            itemDict["image_url"] = [
+                                "url": imageUrl.url,
+                                "detail": imageUrl.detail
+                            ].compactMapValues { $0 }
+                        }
+                        return itemDict
+                    }
+                }
+                
+                return messageDict
+            },
             "temperature": parameters.temperature,
             "max_tokens": parameters.maxTokens as Any,
             "top_p": parameters.topP as Any,
@@ -62,7 +108,15 @@ public struct OpenAIProvider: LLMProvider {
                 throw NetworkError.invalidResponse
             }
             
-            return firstChoice.message.content
+            // Extract text content from the response
+            switch firstChoice.message.content {
+            case .text(let text):
+                return text
+            case .image:
+                throw NetworkError.invalidResponse // Assistant shouldn't return images
+            case .array(let items):
+                return items.compactMap { $0.text }.joined(separator: " ")
+            }
             
         } catch let networkError as NetworkError {
             // Handle network-specific errors
@@ -82,7 +136,38 @@ public struct OpenAIProvider: LLMProvider {
         }
     }
     
+    // MARK: - Helper Methods
     
-    
+    /// Convert ChatMessage to OpenAIMessage
+    private func convertChatMessageToOpenAI(_ chatMessage: ChatMessage) -> OpenAIMessage {
+        switch chatMessage.content {
+        case .text(let text):
+            return OpenAIMessage(role: chatMessage.role.rawValue, content: text)
+        case .image(let imageContent):
+            return OpenAIMessage(
+                role: chatMessage.role.rawValue,
+                imageUrl: imageContent.url,
+                imageDetail: imageContent.detail
+            )
+        case .mixed(let items):
+            let openAIItems = items.map { item in
+                switch item.type {
+                case "text":
+                    return OpenAIContentItem(type: "text", text: item.text)
+                case "image_url":
+                    return OpenAIContentItem(
+                        type: "image_url",
+                        imageUrl: OpenAIImageUrl(
+                            url: item.imageUrl?.url ?? "",
+                            detail: item.imageUrl?.detail
+                        )
+                    )
+                default:
+                    return OpenAIContentItem(type: "text", text: item.text)
+                }
+            }
+            return OpenAIMessage(role: chatMessage.role.rawValue, content: .array(openAIItems))
+        }
+    }
 }
 

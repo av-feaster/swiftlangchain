@@ -1,7 +1,7 @@
 import Foundation
 
 /// Protocol for tools that can be used by agents
-public protocol Tool {
+public protocol Tool: Sendable {
     var name: String { get }
     var description: String { get }
     

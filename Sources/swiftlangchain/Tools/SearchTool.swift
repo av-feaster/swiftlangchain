@@ -21,45 +21,27 @@ public struct SearchTool: Tool {
 }
 
 /// Weather tool implementation
-public final class WeatherTool: Tool, AuthenticatedTool {
+public final class WeatherTool: Tool {
     public let name = "weather"
     public let description = "Gets weather information for a location"
 
-    private var apiKey: String?
-    public var isAuthenticated: Bool { apiKey != nil }
-
     public init() {}
 
-    public func authenticate() async throws {
-        // TODO: Replace with actual authentication
-        apiKey = "demo-key"
-    }
-
     public func syncExecute(_ input: String) throws -> String {
-        guard isAuthenticated else {
-            throw ToolError.notAuthenticated
-        }
+        // Simplified implementation for now
         return "Weather for: \(input)"
     }
 }
 
-
 /// Database query tool implementation
-public final class DatabaseTool: Tool, RateLimitedTool {
+public final class DatabaseTool: Tool {
     public let name = "database"
     public let description = "Executes database queries"
-    public let rateLimit: TimeInterval = 1.0
-    public var lastExecutionTime: Date?
 
     public init() {}
 
     public func syncExecute(_ input: String) throws -> String {
-        if let lastTime = lastExecutionTime,
-           Date().timeIntervalSince(lastTime) < rateLimit {
-            throw ToolError.rateLimitExceeded
-        }
-
-        lastExecutionTime = Date()
+        // Simplified implementation for now
         return "Database query result for: \(input)"
     }
 }

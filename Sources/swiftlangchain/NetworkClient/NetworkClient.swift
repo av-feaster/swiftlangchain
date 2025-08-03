@@ -23,7 +23,7 @@ public struct NetworkClient {
         headers: [String: String],
         body: [String: Any],
         responseType: T.Type,
-        completion: @escaping (Result<T, NetworkError>) -> Void
+        completion: @escaping @Sendable (Result<T, NetworkError>) -> Void
     ) {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"

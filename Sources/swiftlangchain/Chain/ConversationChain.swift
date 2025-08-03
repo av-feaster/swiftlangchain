@@ -5,7 +5,6 @@
 //  Created by Aman Verma on 28/07/25.
 //
 
-
 public final class ConversationChain: Chain {
     
     public typealias Input = String
@@ -22,41 +21,80 @@ public final class ConversationChain: Chain {
     public func run(_ input: String) async throws -> String {
         memory.addMessage(ChatMessage(role: .user, content: input))
 
-        let messages = memory.getMessages().map {
-            ["role": $0.role.rawValue, "content": $0.content]
+        guard let openAI = llm as? OpenAIProvider else {
+            throw NetworkError.invalidResponse
         }
+
+        let messages = memory.getMessages()
+        let response = try await openAI.generateWithMessages(messages)
+
+        memory.addMessage(ChatMessage(role: .assistant, content: response))
+        return response
+    }
+    
+    /// Run with image support
+    public func runWithImage(_ input: String, imageUrl: String, imageDetail: String? = nil) async throws -> String {
+        let message = ChatMessage(role: .user, text: input, imageUrl: imageUrl, imageDetail: imageDetail)
+        memory.addMessage(message)
 
         guard let openAI = llm as? OpenAIProvider else {
             throw NetworkError.invalidResponse
         }
 
-        let requestBody: [String: Any] = [
-            "model": openAI.model,
-            "messages": messages
-        ]
+        let messages = memory.getMessages()
+        let response = try await openAI.generateWithMessages(messages)
 
-        let url = URL(string: "\(openAI.baseURL)/chat/completions")!
-        let headers = [
-            "Authorization": "Bearer \(openAI.apiKey)",
-            "Content-Type": "application/json"
-        ]
+        memory.addMessage(ChatMessage(role: .assistant, content: response))
+        return response
+    }
+    
+    /// Run with image only (no text)
+    public func runWithImageOnly(_ imageUrl: String, imageDetail: String? = nil) async throws -> String {
+        let message = ChatMessage(role: .user, imageUrl: imageUrl, imageDetail: imageDetail)
+        memory.addMessage(message)
 
-        let response: OpenAIResponse = try await NetworkClient.postUnsafe(
-            url: url,
-            headers: headers,
-            body: requestBody,
-            responseType: OpenAIResponse.self
-        )
-
-        guard let reply = response.choices.first?.message.content else {
+        guard let openAI = llm as? OpenAIProvider else {
             throw NetworkError.invalidResponse
         }
 
-        memory.addMessage(ChatMessage(role: .assistant, content: reply))
-        return reply
+        let messages = memory.getMessages()
+        let response = try await openAI.generateWithMessages(messages)
+
+        memory.addMessage(ChatMessage(role: .assistant, content: response))
+        return response
     }
 
-   
+    /// Run with base64 image support
+    public func runWithBase64Image(_ input: String, imageBase64: String, imageDetail: String? = nil) async throws -> String {
+        let message = ChatMessage(role: .user, text: input, imageBase64: imageBase64, imageDetail: imageDetail)
+        memory.addMessage(message)
+
+        guard let openAI = llm as? OpenAIProvider else {
+            throw NetworkError.invalidResponse
+        }
+
+        let messages = memory.getMessages()
+        let response = try await openAI.generateWithMessages(messages)
+
+        memory.addMessage(ChatMessage(role: .assistant, content: response))
+        return response
+    }
+
+    /// Run with base64 image only (no text)
+    public func runWithBase64ImageOnly(_ imageBase64: String, imageDetail: String? = nil) async throws -> String {
+        let message = ChatMessage(role: .user, imageBase64: imageBase64, imageDetail: imageDetail)
+        memory.addMessage(message)
+
+        guard let openAI = llm as? OpenAIProvider else {
+            throw NetworkError.invalidResponse
+        }
+
+        let messages = memory.getMessages()
+        let response = try await openAI.generateWithMessages(messages)
+
+        memory.addMessage(ChatMessage(role: .assistant, content: response))
+        return response
+    }
 
     public func combine<Next>(with other: Next) -> SequentialChain<ConversationChain, Next>
     where Next: CombinableChain, String == Next.Input {

@@ -38,7 +38,10 @@ public struct ContextMemory {
     /// Format memory into a single string prompt
     public func asPromptContext() -> String {
         messages
-            .map { "\($0.role.rawValue): \($0.content)" }
+            .compactMap { message in
+                guard let textContent = message.textContent else { return nil }
+                return "\(message.role.rawValue): \(textContent)"
+            }
             .joined(separator: "\n")
     }
 
@@ -49,22 +52,45 @@ public struct ContextMemory {
 
     /// Trims context by message count and estimated tokens
     private mutating func trimIfNeeded() {
+        // Trim by message count if needed
         if let maxMessages = maxMessages, messages.count > maxMessages {
-            messages = Array(messages.suffix(maxMessages))
+            let excess = messages.count - maxMessages
+            messages.removeFirst(excess)
         }
-
+        
+        // Trim by token count if needed
         if let maxTokens = maxTokens {
             var totalTokens = 0
-            var trimmed: [ChatMessage] = []
-
+            var trimmedMessages: [ChatMessage] = []
+            
+            // Start from the most recent messages
             for message in messages.reversed() {
-                let tokenCount = Tokenizer.estimateTokenCount(message.content, model: currentModel)
-                if totalTokens + tokenCount > maxTokens { break }
-                trimmed.insert(message, at: 0)
-                totalTokens += tokenCount
+                let messageTokens = estimateTokens(for: message)
+                if totalTokens + messageTokens <= maxTokens {
+                    trimmedMessages.insert(message, at: 0)
+                    totalTokens += messageTokens
+                } else {
+                    break
+                }
             }
-
-            messages = trimmed
+            
+            messages = trimmedMessages
         }
+    }
+    
+    /// Estimate tokens for a message
+    private func estimateTokens(for message: ChatMessage) -> Int {
+        var tokenCount = 0
+        
+        // Count text tokens
+        if let textContent = message.textContent {
+            tokenCount += textContent.components(separatedBy: .whitespacesAndNewlines).count
+        }
+        
+        // Count image tokens (rough estimate: 1 image ≈ 85 tokens for gpt-4-vision)
+        let imageCount = message.imageUrls.count
+        tokenCount += imageCount * 85
+        
+        return tokenCount
     }
 }
