@@ -1,0 +1,11 @@
+// Configuration file for SwiftLangChain Sample App
+// Copy this file to Config.xcconfig.local and add your actual API key
+// Add Config.xcconfig.local to .gitignore to keep your API key secure
+
+// OpenAI API Configuration
+OPENAI_API_KEY = your-api-key-here
+OPENAI_MODEL = gpt-3.5-turbo
+
+// Memory Configuration
+MAX_TOKENS = 4000
+MAX_MESSAGES = 10

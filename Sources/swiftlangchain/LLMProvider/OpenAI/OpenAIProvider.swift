@@ -146,7 +146,7 @@ public struct OpenAIProvider: LLMProvider {
         case .image(let imageContent):
             return OpenAIMessage(
                 role: chatMessage.role.rawValue,
-                imageUrl: imageContent.url,
+                imageUrl: imageContent.url ?? "",
                 imageDetail: imageContent.detail
             )
         case .mixed(let items):

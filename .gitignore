@@ -6,3 +6,7 @@ DerivedData/
 .swiftpm/configuration/registries.json
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .netrc
+
+# Local configuration files with API keys
+**/Config.xcconfig.local
+**/sample-app/Config.xcconfig.local

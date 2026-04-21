@@ -1,0 +1,15 @@
+{
+  "originHash" : "37b89681b9c49de04356d2fb1395d66db84910ed4922705c8fed32c2842796e4",
+  "pins" : [
+    {
+      "identity" : "swiftlangchain",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/av-feaster/swiftlangchain",
+      "state" : {
+        "branch" : "main",
+        "revision" : "5b8cd90be729f19d09014a7381080b793109308f"
+      }
+    }
+  ],
+  "version" : 3
+}

@@ -20,5 +20,15 @@ public extension SwiftLangChain {
 
 // MARK: - Module Re-exports
 
-// This file serves as the main entry point and re-exports all public APIs
-// All other files in the module are automatically available when importing SwiftLangChain
+// This file serves as the main entry point for the SwiftLangChain framework
+// All public types defined in the module are automatically available when importing SwiftLangChain
+// 
+// Key components available:
+// - LLM Providers: LLMProvider, OpenAIProvider, GenerationParameters
+// - Chains: Chain, CombinableChain, LLMChain, ConversationChain, SequentialChain
+// - Agents: Agent, CombinableAgent, ConversationalAgent, ReActAgent, PlanAndExecuteAgent, MultiAgent, AgentBuilder
+// - Memory: ChatMessage, ContextMemory
+// - Prompts: PromptTemplate, PromptValue
+// - Tools: Tool, ToolRegistry, CalculatorTool, SearchTool
+// - Network: NetworkClient, NetworkError
+// - Utilities: Tokenizer, ImageUtils, OutputParser, JSONOutputParser, TextOutputParser
