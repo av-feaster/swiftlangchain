@@ -12,10 +12,32 @@ struct ContentView: View {
     @State private var userInput = ""
     @State private var response = ""
     @State private var isLoading = false
+    @State private var selectedProvider: ProviderType = .openAI
+    @State private var tokenCount: Int = 0
+    @State private var estimatedCost: Double = 0.0
+    @State private var cacheHitRate: Double = 0.0
     
-    // Initialize components using Config
-    private let provider = OpenAIProvider(apiKey: Config.openAIAPIKey, model: Config.openAIModel)
     private let memory = ContextMemory(maxTokens: Config.maxTokens, maxMessages: Config.maxMessages)
+    
+    enum ProviderType: String, CaseIterable {
+        case openAI = "OpenAI"
+        case claude = "Claude"
+        case gemini = "Gemini"
+        case cohere = "Cohere"
+    }
+    
+    var provider: any LLMProvider {
+        switch selectedProvider {
+        case .openAI:
+            return OpenAIProvider(apiKey: Config.openAIAPIKey, model: Config.openAIModel)
+        case .claude:
+            return AnthropicProvider(apiKey: Config.claudeAPIKey ?? "", model: Config.claudeModel ?? "claude-3-5-sonnet-20241022")
+        case .gemini:
+            return GeminiProvider(apiKey: Config.geminiAPIKey ?? "", model: Config.geminiModel ?? "gemini-1.5-pro")
+        case .cohere:
+            return CohereProvider(apiKey: Config.cohereAPIKey ?? "", model: Config.cohereModel ?? "command-r-plus")
+        }
+    }
     
     var body: some View {
         VStack(spacing: 20) {
@@ -31,6 +53,15 @@ struct ContentView: View {
             Text("AI-powered conversational interface")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
+            
+            // Provider selection
+            Picker("Provider", selection: $selectedProvider) {
+                ForEach(ProviderType.allCases, id: \.self) { provider in
+                    Text(provider.rawValue).tag(provider)
+                }
+            }
+            .pickerStyle(SegmentedPickerStyle())
+            .padding(.horizontal)
             
             Divider()
             
@@ -71,6 +102,21 @@ struct ContentView: View {
             
             Divider()
             
+            // Token usage display
+            HStack {
+                VStack(alignment: .leading) {
+                    Text("Tokens: \(tokenCount)")
+                        .font(.caption)
+                    Text("Cost: $\(String(format: "%.4f", estimatedCost))")
+                        .font(.caption)
+                }
+                .foregroundColor(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal)
+            
+            Divider()
+            
             // Feature showcase
             VStack(alignment: .leading, spacing: 10) {
                 Text("Available Features:")
@@ -80,6 +126,14 @@ struct ContentView: View {
                 FeatureRow(icon: "link", title: "Chain Composition", description: "Chain multiple operations")
                 FeatureRow(icon: "wrench.and.screwdriver", title: "Tool Support", description: "Use tools like Calculator")
                 FeatureRow(icon: "photo", title: "Image Support", description: "Analyze images with GPT-4 Vision")
+                FeatureRow(icon: "waveform", title: "Streaming", description: "Real-time response streaming")
+                FeatureRow(icon: "function", title: "Function Calling", description: "OpenAI function calling")
+                FeatureRow(icon: "brain", title: "Multiple Providers", description: "OpenAI, Claude, Gemini, Cohere")
+                FeatureRow(icon: "iphone", title: "Mobile Tools", description: "Camera, Location, Contacts, Photos")
+                FeatureRow(icon: "cylinder", title: "Caching", description: "Response caching for speed")
+                FeatureRow(icon: "arrow.clockwise", title: "Retry Logic", description: "Automatic retry with backoff")
+                FeatureRow(icon: "speedometer", title: "Rate Limiting", description: "API rate limit management")
+                FeatureRow(icon: "chart.bar", title: "Token Counting", description: "Track usage and costs")
             }
             .padding()
         }
@@ -94,8 +148,17 @@ struct ContentView: View {
                 let chain = ConversationChain(llm: provider, memory: memory)
                 let result = try await chain.run(userInput)
                 
+                // Count tokens
+                let counter = TokenCounter(model: .gpt4)
+                let promptTokens = counter.countTokens(in: userInput)
+                let completionTokens = counter.countTokens(in: result)
+                let totalTokens = promptTokens + completionTokens
+                let cost = counter.estimateCost(tokens: totalTokens, model: .gpt4)
+                
                 await MainActor.run {
                     response = result
+                    tokenCount = totalTokens
+                    estimatedCost = cost
                     userInput = ""
                     isLoading = false
                 }
