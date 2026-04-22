@@ -10,7 +10,7 @@ let package = Package(
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
-            name: "swiftlangchain",
+            name: "SwiftLangChain",
             targets: ["swiftlangchain"]),
     ],
     targets: [
@@ -20,7 +20,7 @@ let package = Package(
             name: "swiftlangchain"),
         .testTarget(
             name: "swiftlangchainTests",
-            dependencies: ["swiftlangchain"]
+            dependencies: ["SwiftLangChain"]
         ),
     ]
 )
