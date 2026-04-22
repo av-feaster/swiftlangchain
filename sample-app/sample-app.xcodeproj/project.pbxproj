@@ -276,8 +276,11 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "io.av-feaster.sample-app";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -303,8 +306,11 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "io.av-feaster.sample-app";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -331,22 +337,18 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		59443DD82F9816010044CFA0 /* XCRemoteSwiftPackageReference "swiftlangchain" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/av-feaster/swiftlangchain";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
+/* Begin XCLocalSwiftPackageReference section */
+		59443DD82F9816010044CFA0 /* XCLocalSwiftPackageReference "swiftlangchain" */ = {
+			isa = XCLocalSwiftPackageReference;
+			repositoryURL = "..";
 		};
-/* End XCRemoteSwiftPackageReference section */
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		59443DD92F9816010044CFA0 /* swiftlangchain */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 59443DD82F9816010044CFA0 /* XCRemoteSwiftPackageReference "swiftlangchain" */;
-			productName = swiftlangchain;
+			package = 59443DD82F9816010044CFA0 /* XCLocalSwiftPackageReference "swiftlangchain" */;
+			productName = SwiftLangChain;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
