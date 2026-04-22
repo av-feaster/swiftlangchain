@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		59443DDA2F9816010044CFA0 /* swiftlangchain in Frameworks */ = {isa = PBXBuildFile; productRef = 59443DD92F9816010044CFA0 /* swiftlangchain */; };
+		59443DDA2F9816010044CFA0 /* SwiftLangChain in Frameworks */ = {isa = PBXBuildFile; productRef = 59443DD92F9816010044CFA0 /* SwiftLangChain */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,7 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				59443DDA2F9816010044CFA0 /* swiftlangchain in Frameworks */,
+				59443DDA2F9816010044CFA0 /* SwiftLangChain in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,7 +70,7 @@
 			);
 			name = "sample-app";
 			packageProductDependencies = (
-				59443DD92F9816010044CFA0 /* swiftlangchain */,
+				59443DD92F9816010044CFA0 /* SwiftLangChain */,
 			);
 			productName = "sample-app";
 			productReference = 59443DC32F98132D0044CFA0 /* sample-app.app */;
@@ -101,7 +101,7 @@
 			mainGroup = 59443DBA2F98132D0044CFA0;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				59443DD82F9816010044CFA0 /* XCRemoteSwiftPackageReference "swiftlangchain" */,
+				59443DD82F9816010044CFA0 /* XCLocalSwiftPackageReference "swiftlangchain" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 59443DC42F98132D0044CFA0 /* Products */;
@@ -345,7 +345,7 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		59443DD92F9816010044CFA0 /* swiftlangchain */ = {
+		59443DD92F9816010044CFA0 /* SwiftLangChain */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 59443DD82F9816010044CFA0 /* XCLocalSwiftPackageReference "swiftlangchain" */;
 			productName = SwiftLangChain;
