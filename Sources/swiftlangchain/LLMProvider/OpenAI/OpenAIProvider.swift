@@ -8,7 +8,7 @@
 import Foundation
 
 /// OpenAI API provider implementation
-public struct OpenAIProvider: LLMProvider {
+public struct OpenAIProvider: StreamingLLMProvider {
     let apiKey: String
     let baseURL: String
     let model: String
@@ -37,6 +37,135 @@ public struct OpenAIProvider: LLMProvider {
         return try await generateWithMessages(openAIMessages, parameters: parameters)
     }
     
+    /// Generate streaming response for the given prompt
+    public func generateStream(prompt: String) async throws -> AsyncStream<StreamChunk> {
+        return try await generateStream(prompt: prompt, parameters: GenerationParameters())
+    }
+    
+    /// Generate streaming response with additional parameters
+    public func generateStream(prompt: String, parameters: GenerationParameters) async throws -> AsyncStream<StreamChunk> {
+        let chatMessage = ChatMessage(role: .user, content: prompt)
+        let openAIMessage = convertChatMessageToOpenAI(chatMessage)
+        return try await generateStreamWithMessages([openAIMessage], parameters: parameters)
+    }
+    
+    /// Generate streaming response with ChatMessages
+    public func generateStreamWithMessages(_ messages: [ChatMessage], parameters: GenerationParameters = GenerationParameters()) async throws -> AsyncStream<StreamChunk> {
+        let openAIMessages = messages.map { convertChatMessageToOpenAI($0) }
+        return try await generateStreamWithMessages(openAIMessages, parameters: parameters)
+    }
+    
+    /// Generate streaming response with OpenAIMessages
+    public func generateStreamWithMessages(_ messages: [OpenAIMessage], parameters: GenerationParameters = GenerationParameters()) async throws -> AsyncStream<StreamChunk> {
+        // Construct the API URL
+        guard let url = URL(string: "\(baseURL)/chat/completions") else {
+            throw NetworkError.invalidURL
+        }
+        
+        // Prepare headers
+        let headers = [
+            "Authorization": "Bearer \(apiKey)",
+            "Content-Type": "application/json"
+        ]
+        
+        // Create the request body with stream: true
+        let requestBody: [String: Any] = [
+            "model": model,
+            "messages": messages.map { message in
+                var messageDict: [String: Any] = ["role": message.role]
+                
+                switch message.content {
+                case .text(let text):
+                    messageDict["content"] = text
+                case .image(let imageUrl):
+                    messageDict["content"] = [
+                        [
+                            "type": "image_url",
+                            "image_url": [
+                                "url": imageUrl.url,
+                                "detail": imageUrl.detail
+                            ].compactMapValues { $0 }
+                        ]
+                    ]
+                case .array(let items):
+                    messageDict["content"] = items.map { item in
+                        var itemDict: [String: Any] = ["type": item.type]
+                        if let text = item.text {
+                            itemDict["text"] = text
+                        }
+                        if let imageUrl = item.imageUrl {
+                            itemDict["image_url"] = [
+                                "url": imageUrl.url,
+                                "detail": imageUrl.detail
+                            ].compactMapValues { $0 }
+                        }
+                        return itemDict
+                    }
+                }
+                
+                return messageDict
+            },
+            "temperature": parameters.temperature,
+            "max_tokens": parameters.maxTokens as Any,
+            "top_p": parameters.topP as Any,
+            "frequency_penalty": parameters.frequencyPenalty as Any,
+            "presence_penalty": parameters.presencePenalty as Any,
+            "stream": true
+        ].compactMapValues { $0 }
+        
+        return AsyncStream { continuation in
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.allHTTPHeaderFields = headers
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+            do {
+                request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+            } catch {
+                continuation.finish()
+                return
+            }
+            
+            let task = URLSession.shared.dataTask(with: request) { data, response, error in
+                if let error = error {
+                    continuation.finish()
+                    return
+                }
+                
+                guard let httpResponse = response as? HTTPURLResponse,
+                      (200..<300).contains(httpResponse.statusCode),
+                      let data = data else {
+                    continuation.finish()
+                    return
+                }
+                
+                // Parse streaming response
+                let lines = String(data: data, encoding: .utf8)?.components(separatedBy: "\n") ?? []
+                
+                for line in lines {
+                    if line.hasPrefix("data: ") {
+                        let jsonString = String(line.dropFirst(6))
+                        if jsonString == "[DONE]" {
+                            continuation.yield(StreamChunk(content: "", isComplete: true))
+                            continuation.finish()
+                            return
+                        }
+                        
+                        if let data = jsonString.data(using: .utf8),
+                           let chunk = try? JSONDecoder().decode(OpenAIStreamChunk.self, from: data),
+                           let content = chunk.choices.first?.delta.content {
+                            continuation.yield(StreamChunk(content: content, isComplete: false))
+                        }
+                    }
+                }
+                
+                continuation.finish()
+            }
+            
+            task.resume()
+        }
+    }
+
     /// Generate response with OpenAIMessages
     public func generateWithMessages(_ messages: [OpenAIMessage], parameters: GenerationParameters = GenerationParameters()) async throws -> String {
         // Construct the API URL

@@ -231,3 +231,32 @@ public struct OpenAIError: Codable {
 public enum OpenAICustomError: Error {
     case custom(message: String, statusCode: Int)
 }
+
+// MARK: - OpenAI Streaming Response Models
+
+/// OpenAI Streaming Chunk
+public struct OpenAIStreamChunk: Codable {
+    public let id: String
+    public let object: String
+    public let created: Int
+    public let model: String
+    public let choices: [OpenAIStreamChoice]
+}
+
+/// OpenAI Streaming Choice
+public struct OpenAIStreamChoice: Codable {
+    public let index: Int
+    public let delta: OpenAIStreamDelta
+    public let finishReason: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case index, delta
+        case finishReason = "finish_reason"
+    }
+}
+
+/// OpenAI Streaming Delta
+public struct OpenAIStreamDelta: Codable {
+    public let role: String?
+    public let content: String?
+}

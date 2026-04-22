@@ -17,6 +17,26 @@ public protocol LLMProvider {
     func generate(prompt: String, parameters: GenerationParameters) async throws -> String
 }
 
+/// Protocol for LLM providers that support streaming responses
+public protocol StreamingLLMProvider: LLMProvider {
+    /// Generate a streaming response for the given prompt
+    func generateStream(prompt: String) async throws -> AsyncStream<StreamChunk>
+    
+    /// Generate a streaming response with additional parameters
+    func generateStream(prompt: String, parameters: GenerationParameters) async throws -> AsyncStream<StreamChunk>
+}
+
+/// A chunk of streaming response
+public struct StreamChunk {
+    public let content: String
+    public let isComplete: Bool
+    
+    public init(content: String, isComplete: Bool = false) {
+        self.content = content
+        self.isComplete = isComplete
+    }
+}
+
 /// Parameters for text generation
 public struct GenerationParameters {
     public let temperature: Double
