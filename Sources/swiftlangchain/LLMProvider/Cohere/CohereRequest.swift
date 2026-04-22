@@ -57,8 +57,8 @@ public struct CohereResponse: Codable {
 }
 
 public struct CohereMeta: Codable {
-    public let api_version: Codable?
-    public let billed_units: Codable?
+    public let api_version: String?
+    public let billed_units: String?
 }
 
 public struct CohereErrorResponse: Codable {

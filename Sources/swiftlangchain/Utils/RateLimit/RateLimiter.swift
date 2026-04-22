@@ -119,7 +119,7 @@ public actor SlidingWindowRateLimiter {
 }
 
 /// Rate limit status
-public struct RateLimitStatus {
+public struct RateLimitStatus: Sendable {
     public let remaining: Int
     public let resetTime: Date?
     public let limit: Int
