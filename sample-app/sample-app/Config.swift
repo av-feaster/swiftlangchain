@@ -45,6 +45,90 @@ public struct Config {
         return "gpt-3.5-turbo"
     }
     
+    // MARK: - Anthropic/Claude Configuration
+    
+    /// Anthropic API Key
+    public static var claudeAPIKey: String? {
+        if let envKey = ProcessInfo.processInfo.environment["CLAUDE_API_KEY"], !envKey.isEmpty {
+            return envKey
+        }
+        
+        if let bundleKey = Bundle.main.object(forInfoDictionaryKey: "CLAUDE_API_KEY") as? String, !bundleKey.isEmpty {
+            return bundleKey
+        }
+        
+        return nil
+    }
+    
+    /// Anthropic Model name
+    public static var claudeModel: String? {
+        if let envModel = ProcessInfo.processInfo.environment["CLAUDE_MODEL"], !envModel.isEmpty {
+            return envModel
+        }
+        
+        if let bundleModel = Bundle.main.object(forInfoDictionaryKey: "CLAUDE_MODEL") as? String, !bundleModel.isEmpty {
+            return bundleModel
+        }
+        
+        return "claude-3-5-sonnet-20241022"
+    }
+    
+    // MARK: - Google Gemini Configuration
+    
+    /// Gemini API Key
+    public static var geminiAPIKey: String? {
+        if let envKey = ProcessInfo.processInfo.environment["GEMINI_API_KEY"], !envKey.isEmpty {
+            return envKey
+        }
+        
+        if let bundleKey = Bundle.main.object(forInfoDictionaryKey: "GEMINI_API_KEY") as? String, !bundleKey.isEmpty {
+            return bundleKey
+        }
+        
+        return nil
+    }
+    
+    /// Gemini Model name
+    public static var geminiModel: String? {
+        if let envModel = ProcessInfo.processInfo.environment["GEMINI_MODEL"], !envModel.isEmpty {
+            return envModel
+        }
+        
+        if let bundleModel = Bundle.main.object(forInfoDictionaryKey: "GEMINI_MODEL") as? String, !bundleModel.isEmpty {
+            return bundleModel
+        }
+        
+        return "gemini-1.5-pro"
+    }
+    
+    // MARK: - Cohere Configuration
+    
+    /// Cohere API Key
+    public static var cohereAPIKey: String? {
+        if let envKey = ProcessInfo.processInfo.environment["COHERE_API_KEY"], !envKey.isEmpty {
+            return envKey
+        }
+        
+        if let bundleKey = Bundle.main.object(forInfoDictionaryKey: "COHERE_API_KEY") as? String, !bundleKey.isEmpty {
+            return bundleKey
+        }
+        
+        return nil
+    }
+    
+    /// Cohere Model name
+    public static var cohereModel: String? {
+        if let envModel = ProcessInfo.processInfo.environment["COHERE_MODEL"], !envModel.isEmpty {
+            return envModel
+        }
+        
+        if let bundleModel = Bundle.main.object(forInfoDictionaryKey: "COHERE_MODEL") as? String, !bundleModel.isEmpty {
+            return bundleModel
+        }
+        
+        return "command-r-plus"
+    }
+    
     // MARK: - Memory Configuration
     
     /// Maximum tokens for context memory

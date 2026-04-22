@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import SwiftLangChain
+import swiftlangchain
 
 struct ContentView: View {
     @State private var userInput = ""
@@ -17,7 +17,7 @@ struct ContentView: View {
     @State private var estimatedCost: Double = 0.0
     @State private var cacheHitRate: Double = 0.0
     
-    private let memory = ContextMemory(maxTokens: Config.maxTokens, maxMessages: Config.maxMessages)
+    private let memory = ContextMemory(maxTokens: Config.maxTokens, maxMessages: Config.maxMessages, model: .gpt3)
     
     enum ProviderType: String, CaseIterable {
         case openAI = "OpenAI"
