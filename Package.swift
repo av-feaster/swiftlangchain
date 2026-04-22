@@ -20,7 +20,7 @@ let package = Package(
             name: "swiftlangchain"),
         .testTarget(
             name: "swiftlangchainTests",
-            dependencies: ["SwiftLangChain"]
+            dependencies: ["swiftlangchain"]
         ),
     ]
 )
