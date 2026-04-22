@@ -260,3 +260,12 @@ public struct OpenAIStreamDelta: Codable {
     public let role: String?
     public let content: String?
 }
+
+/// OpenAI Response with Tools (for function calling)
+public struct OpenAIResponseWithTools: Codable {
+    public let id: String
+    public let object: String
+    public let created: Int
+    public let model: String
+    public let choices: [OpenAIChoiceWithTools]
+}

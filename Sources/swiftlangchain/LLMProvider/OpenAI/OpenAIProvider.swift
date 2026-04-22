@@ -265,6 +265,107 @@ public struct OpenAIProvider: StreamingLLMProvider {
         }
     }
     
+    /// Generate response with function calling support
+    public func generateWithTools(_ messages: [OpenAIMessage], tools: [OpenAITool], parameters: GenerationParameters = GenerationParameters()) async throws -> OpenAIChoiceWithTools {
+        // Construct the API URL
+        guard let url = URL(string: "\(baseURL)/chat/completions") else {
+            throw NetworkError.invalidURL
+        }
+        
+        // Prepare headers
+        let headers = [
+            "Authorization": "Bearer \(apiKey)",
+            "Content-Type": "application/json"
+        ]
+        
+        // Create the request body with tools
+        let requestBody: [String: Any] = [
+            "model": model,
+            "messages": messages.map { message in
+                var messageDict: [String: Any] = ["role": message.role]
+                
+                switch message.content {
+                case .text(let text):
+                    messageDict["content"] = text
+                case .image(let imageUrl):
+                    messageDict["content"] = [
+                        [
+                            "type": "image_url",
+                            "image_url": [
+                                "url": imageUrl.url,
+                                "detail": imageUrl.detail
+                            ].compactMapValues { $0 }
+                        ]
+                    ]
+                case .array(let items):
+                    messageDict["content"] = items.map { item in
+                        var itemDict: [String: Any] = ["type": item.type]
+                        if let text = item.text {
+                            itemDict["text"] = text
+                        }
+                        if let imageUrl = item.imageUrl {
+                            itemDict["image_url"] = [
+                                "url": imageUrl.url,
+                                "detail": imageUrl.detail
+                            ].compactMapValues { $0 }
+                        }
+                        return itemDict
+                    }
+                }
+                
+                return messageDict
+            },
+            "tools": tools.map { tool in
+                [
+                    "type": tool.type,
+                    "function": [
+                        "name": tool.function.name,
+                        "description": tool.function.description,
+                        "parameters": tool.function.parameters
+                    ].compactMapValues { $0 }
+                ]
+            },
+            "temperature": parameters.temperature,
+            "max_tokens": parameters.maxTokens as Any,
+            "top_p": parameters.topP as Any,
+            "frequency_penalty": parameters.frequencyPenalty as Any,
+            "presence_penalty": parameters.presencePenalty as Any
+        ].compactMapValues { $0 }
+        
+        do {
+            // Make the API call using NetworkClient
+            let response: OpenAIResponseWithTools = try await NetworkClient.postUnsafe(
+                url: url,
+                headers: headers,
+                body: requestBody,
+                responseType: OpenAIResponseWithTools.self
+            )
+            
+            // Extract the response
+            guard let firstChoice = response.choices.first else {
+                throw NetworkError.invalidResponse
+            }
+            
+            return firstChoice
+            
+        } catch let networkError as NetworkError {
+            // Handle network-specific errors
+            switch networkError {
+            case .httpError(let statusCode, let data):
+                // Try to parse OpenAI error response
+                if let errorResponse = try? JSONDecoder().decode(OpenAIErrorResponse.self, from: data) {
+                    throw OpenAICustomError.custom(message: errorResponse.error.message, statusCode: statusCode)
+                } else {
+                    throw networkError
+                }
+            default:
+                throw networkError
+            }
+        } catch {
+            throw NetworkError.requestFailed(error)
+        }
+    }
+    
     // MARK: - Helper Methods
     
     /// Convert ChatMessage to OpenAIMessage
