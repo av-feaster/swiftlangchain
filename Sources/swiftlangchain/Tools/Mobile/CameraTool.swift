@@ -8,10 +8,10 @@
 import Foundation
 
 #if canImport(AVFoundation)
-import AVFoundation
+@preconcurrency import AVFoundation
 
 /// Tool for capturing photos using the camera
-public struct CameraTool: Tool {
+public struct CameraTool: @unchecked Sendable, Tool {
     public let name = "camera"
     public let description = "Capture a photo using the device camera. Returns the photo as base64 encoded data."
     
@@ -32,6 +32,10 @@ public struct CameraTool: Tool {
     
     public func execute(_ input: String) async throws -> String {
         #if os(iOS)
+        guard session != nil else {
+            throw ToolError.executionFailed("Camera not available on this platform")
+        }
+        
         guard AVCaptureDevice.authorizationStatus(for: .video) == .authorized else {
             throw ToolError.executionFailed("Camera permission not granted")
         }

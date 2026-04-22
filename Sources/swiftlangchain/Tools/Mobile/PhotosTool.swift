@@ -8,10 +8,10 @@
 import Foundation
 
 #if canImport(Photos)
-import Photos
+@preconcurrency import Photos
 
 /// Tool for accessing the device's photo library
-public struct PhotosTool: Tool {
+public struct PhotosTool: @unchecked Sendable, Tool {
     public let name = "photos"
     public let description = "Search and retrieve photos from the device's photo library. Returns photo metadata and base64 encoded image data."
     
@@ -31,7 +31,7 @@ public struct PhotosTool: Tool {
     
     public func execute(_ input: String) async throws -> String {
         #if os(iOS) || os(macOS)
-        guard let imageManager = imageManager else {
+        guard imageManager != nil else {
             throw ToolError.executionFailed("Photos not available on this platform")
         }
         

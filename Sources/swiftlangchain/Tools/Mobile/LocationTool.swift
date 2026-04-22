@@ -8,17 +8,17 @@
 import Foundation
 
 #if canImport(CoreLocation)
-import CoreLocation
+@preconcurrency import CoreLocation
 
 /// Tool for getting the device's current location
-public struct LocationTool: Tool {
+public struct LocationTool: @unchecked Sendable, Tool {
     public let name = "location"
     public let description = "Get the device's current geographic location (latitude, longitude). Returns coordinates in JSON format."
     
     private let locationManager: CLLocationManager?
     
     public init() {
-        #if os(iOS) || os(macOS)
+        #if os(iOS)
         self.locationManager = CLLocationManager()
         #else
         self.locationManager = nil
@@ -30,15 +30,17 @@ public struct LocationTool: Tool {
     }
     
     public func execute(_ input: String) async throws -> String {
-        #if os(iOS) || os(macOS)
-        guard let locationManager = locationManager else {
+        #if os(iOS)
+        guard locationManager != nil else {
             throw ToolError.executionFailed("Location services not available on this platform")
         }
         
+        #if os(iOS)
         guard CLLocationManager.authorizationStatus() == .authorizedWhenInUse ||
               CLLocationManager.authorizationStatus() == .authorizedAlways else {
             throw ToolError.executionFailed("Location permission not granted")
         }
+        #endif
         
         // This is a simplified implementation
         // Real implementation would need to handle CLLocationManagerDelegate and async location updates

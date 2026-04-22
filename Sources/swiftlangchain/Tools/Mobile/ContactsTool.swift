@@ -8,10 +8,10 @@
 import Foundation
 
 #if canImport(Contacts)
-import Contacts
+@preconcurrency import Contacts
 
 /// Tool for accessing the device's contacts
-public struct ContactsTool: Tool {
+public struct ContactsTool: @unchecked Sendable, Tool {
     public let name = "contacts"
     public let description = "Search and retrieve contacts from the device's address book. Returns contact information in JSON format."
     
@@ -31,7 +31,7 @@ public struct ContactsTool: Tool {
     
     public func execute(_ input: String) async throws -> String {
         #if os(iOS) || os(macOS)
-        guard let contactStore = contactStore else {
+        guard contactStore != nil else {
             throw ToolError.executionFailed("Contacts not available on this platform")
         }
         
