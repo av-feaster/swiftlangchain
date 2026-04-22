@@ -58,15 +58,17 @@ public struct TokenCounter {
     /// Estimate token cost for a model
     public func estimateCost(tokens: Int, model: LLMModel = .gpt3) -> Double {
         // Pricing per 1M tokens (approximate USD)
-        let pricing: [LLMModel: (input: Double, output: Double)] = [
-            .gpt3: (0.5, 1.5),
-            .gpt4: (30.0, 60.0),
-            .mistral: (0.15, 0.15),
-            .custom(let cpt): (Double(cpt), Double(cpt))
-        ]
-        
-        guard let (inputPrice, _) = pricing[model] else {
-            return 0
+        let inputPrice: Double
+        switch model {
+        case .gpt3:
+            inputPrice = 0.5
+        case .gpt4:
+            inputPrice = 30.0
+        case .mistral:
+            inputPrice = 0.15
+        case .custom:
+            // For custom models, we can't estimate cost - return 0
+            inputPrice = 0
         }
         
         return (Double(tokens) / 1_000_000) * inputPrice

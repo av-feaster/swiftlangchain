@@ -6,7 +6,7 @@
 //
 
 
-public enum LLMModel {
+public enum LLMModel: Hashable {
     case gpt3
     case gpt4
     case mistral
