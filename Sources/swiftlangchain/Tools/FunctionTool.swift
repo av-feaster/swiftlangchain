@@ -76,7 +76,7 @@ public struct FunctionDefinitionBuilder {
         self.description = description
     }
     
-    public func addProperty(_ name: String, type: String, description: String, isRequired: Bool = false) -> FunctionDefinitionBuilder {
+    public mutating func addProperty(_ name: String, type: String, description: String, isRequired: Bool = false) -> FunctionDefinitionBuilder {
         properties[name] = OpenAIPropertyDefinition(type: type, description: description)
         if isRequired {
             required.append(name)
@@ -84,7 +84,7 @@ public struct FunctionDefinitionBuilder {
         return self
     }
     
-    public func addEnumProperty(_ name: String, values: [String], description: String, isRequired: Bool = false) -> FunctionDefinitionBuilder {
+    public mutating func addEnumProperty(_ name: String, values: [String], description: String, isRequired: Bool = false) -> FunctionDefinitionBuilder {
         properties[name] = OpenAIPropertyDefinition(type: "string", description: description, enum_values: values)
         if isRequired {
             required.append(name)

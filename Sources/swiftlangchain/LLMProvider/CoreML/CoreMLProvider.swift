@@ -8,7 +8,7 @@
 import Foundation
 
 #if canImport(CoreML)
-import CoreML
+@preconcurrency import CoreML
 
 /// Core ML provider for on-device inference
 public struct CoreMLProvider: LLMProvider {
@@ -118,19 +118,14 @@ public struct CoreMLProvider: LLMProvider {
         #if canImport(CoreML)
         // Try to extract text output
         if let output = prediction.featureValue(for: "output") {
-            if let stringValue = output.stringValue {
-                return stringValue
-            }
+            return output.stringValue
         }
         
         if let output = prediction.featureValue(for: "text") {
-            if let stringValue = output.stringValue {
-                return stringValue
-            }
+            return output.stringValue
         }
         
-        // If no string output found, return a placeholder
-        return "Core ML inference completed (output parsing not implemented)"
+        throw CoreMLError.inferenceFailed(NSError(domain: "CoreML", code: -1, userInfo: [NSLocalizedDescriptionKey: "No valid output found"]))
         #else
         throw CoreMLError.deviceNotSupported
         #endif

@@ -8,7 +8,7 @@
 import Foundation
 
 #if canImport(CoreML)
-import CoreML
+@preconcurrency import CoreML
 
 /// Error types for Core ML model loading
 public enum CoreMLError: Error, LocalizedError {
@@ -45,7 +45,7 @@ public actor CoreMLModelLoader {
     /// Check if the device supports Core ML
     public func isCoreMLSupported() -> Bool {
         #if canImport(CoreML)
-        return MLModel.supportsCompute(.all)
+        return true // Core ML is available on iOS 11+ and macOS 10.13+
         #else
         return false
         #endif
