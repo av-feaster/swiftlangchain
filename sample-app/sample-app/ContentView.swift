@@ -24,6 +24,7 @@ struct ContentView: View {
         case claude = "Claude"
         case gemini = "Gemini"
         case cohere = "Cohere"
+        // case perplexity = "Perplexity" // TODO: Enable after pushing PerplexityProvider to GitHub
     }
     
     var provider: any LLMProvider {
@@ -36,6 +37,10 @@ struct ContentView: View {
             return GeminiProvider(apiKey: Config.geminiAPIKey ?? "", model: Config.geminiModel ?? "gemini-1.5-pro")
         case .cohere:
             return CohereProvider(apiKey: Config.cohereAPIKey ?? "", model: Config.cohereModel ?? "command-r-plus")
+        // case .perplexity: // TODO: Enable after pushing PerplexityProvider to GitHub
+        //     return PerplexityProvider(apiKey: Config.perplexityAPIKey ?? "", model: Config.perplexityModel ?? "sonar-online")
+        default:
+            fatalError("Provider not implemented")
         }
     }
     

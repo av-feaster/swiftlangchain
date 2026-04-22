@@ -8,7 +8,7 @@
 import Foundation
 
 /// Anthropic/Claude API provider implementation
-public struct AnthropicProvider: LLMProvider {
+public struct AnthropicProvider: LLMProvider, ModelFetcher {
     let apiKey: String
     let baseURL: String
     let model: String
@@ -24,6 +24,50 @@ public struct AnthropicProvider: LLMProvider {
         self.model = model
         self.baseURL = baseURL
         self.maxTokens = maxTokens
+    }
+    
+    /// Fetch available models from Anthropic API
+    public func fetchModels() async throws -> [ModelInfo] {
+        // Check cache first
+        if let cached = await sharedModelCache.get(key: "anthropic") {
+            return cached
+        }
+        
+        guard let url = URL(string: "\(baseURL)/models") else {
+            throw NetworkError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            throw NetworkError.httpError(httpResponse.statusCode, data)
+        }
+        
+        let modelsResponse = try JSONDecoder().decode(AnthropicModelsResponse.self, from: data)
+        
+        let modelInfos = modelsResponse.data.map { model in
+            ModelInfo(
+                id: model.id,
+                name: model.displayName ?? model.name,
+                description: model.type,
+                contextLength: model.contextLength,
+                maxTokens: model.maxTokens
+            )
+        }
+        
+        // Cache the results
+        await sharedModelCache.set(key: "anthropic", models: modelInfos)
+        
+        return modelInfos
     }
     
     public func generate(prompt: String) async throws -> String {
@@ -87,6 +131,61 @@ public struct AnthropicProvider: LLMProvider {
             }
             
             return text
+            
+        } catch let networkError as NetworkError {
+            // Handle network-specific errors
+            switch networkError {
+            case .httpError(let statusCode, let data):
+                // Try to parse Anthropic error response
+                if let errorResponse = try? JSONDecoder().decode(AnthropicErrorResponse.self, from: data) {
+                    throw AnthropicCustomError.custom(message: errorResponse.error.message, statusCode: statusCode)
+                } else {
+                    throw networkError
+                }
+            default:
+                throw networkError
+            }
+        } catch {
+            throw NetworkError.requestFailed(error)
+        }
+    }
+    
+    /// Generate response with tools
+    public func generateWithTools(_ messages: [AnthropicMessage], tools: [AnthropicTool], parameters: GenerationParameters = GenerationParameters()) async throws -> AnthropicResponse {
+        // Construct the API URL
+        guard let url = URL(string: "\(baseURL)/messages") else {
+            throw NetworkError.invalidURL
+        }
+        
+        // Prepare headers
+        let headers = [
+            "x-api-key": apiKey,
+            "anthropic-version": "2023-06-01",
+            "Content-Type": "application/json"
+        ]
+        
+        // Create the request body with tools
+        let requestBody = AnthropicRequestBody(
+            model: model,
+            messages: messages,
+            maxTokens: maxTokens,
+            temperature: parameters.temperature,
+            topP: parameters.topP,
+            topK: nil,
+            stream: false,
+            tools: tools
+        )
+        
+        do {
+            // Make the API call using NetworkClient
+            let response: AnthropicResponse = try await NetworkClient.postUnsafe(
+                url: url,
+                headers: headers,
+                body: try JSONEncoder().encode(requestBody).toDictionary(),
+                responseType: AnthropicResponse.self
+            )
+            
+            return response
             
         } catch let networkError as NetworkError {
             // Handle network-specific errors

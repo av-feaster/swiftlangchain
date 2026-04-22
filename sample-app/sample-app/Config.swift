@@ -129,6 +129,49 @@ public struct Config {
         return "command-r-plus"
     }
     
+    // MARK: - Perplexity Configuration
+    
+    /// Perplexity API Key
+    public static var perplexityAPIKey: String? {
+        if let envKey = ProcessInfo.processInfo.environment["PERPLEXITY_API_KEY"], !envKey.isEmpty {
+            return envKey
+        }
+        
+        if let bundleKey = Bundle.main.object(forInfoDictionaryKey: "PERPLEXITY_API_KEY") as? String, !bundleKey.isEmpty {
+            return bundleKey
+        }
+        
+        return nil
+    }
+    
+    /// Perplexity Model name
+    public static var perplexityModel: String? {
+        if let envModel = ProcessInfo.processInfo.environment["PERPLEXITY_MODEL"], !envModel.isEmpty {
+            return envModel
+        }
+        
+        if let bundleModel = Bundle.main.object(forInfoDictionaryKey: "PERPLEXITY_MODEL") as? String, !bundleModel.isEmpty {
+            return bundleModel
+        }
+        
+        return "sonar-online"
+    }
+    
+    // MARK: - Tavily Search Configuration
+    
+    /// Tavily API Key
+    public static var tavilyAPIKey: String? {
+        if let envKey = ProcessInfo.processInfo.environment["TAVILY_API_KEY"], !envKey.isEmpty {
+            return envKey
+        }
+        
+        if let bundleKey = Bundle.main.object(forInfoDictionaryKey: "TAVILY_API_KEY") as? String, !bundleKey.isEmpty {
+            return bundleKey
+        }
+        
+        return nil
+    }
+    
     // MARK: - Memory Configuration
     
     /// Maximum tokens for context memory

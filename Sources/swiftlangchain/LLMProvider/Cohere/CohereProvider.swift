@@ -8,7 +8,7 @@
 import Foundation
 
 /// Cohere API provider implementation
-public struct CohereProvider: LLMProvider {
+public struct CohereProvider: LLMProvider, ModelFetcher {
     let apiKey: String
     let baseURL: String
     let model: String
@@ -21,6 +21,49 @@ public struct CohereProvider: LLMProvider {
         self.apiKey = apiKey
         self.model = model
         self.baseURL = baseURL
+    }
+    
+    /// Fetch available models from Cohere API
+    public func fetchModels() async throws -> [ModelInfo] {
+        // Check cache first
+        if let cached = await sharedModelCache.get(key: "cohere") {
+            return cached
+        }
+        
+        guard let url = URL(string: "\(baseURL)/models") else {
+            throw NetworkError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            throw NetworkError.httpError(httpResponse.statusCode, data)
+        }
+        
+        let modelsResponse = try JSONDecoder().decode(CohereModelsResponse.self, from: data)
+        
+        let modelInfos = modelsResponse.models.map { model in
+            ModelInfo(
+                id: model.id,
+                name: model.name,
+                description: model.endpoints?.joined(separator: ", "),
+                contextLength: model.contextLength,
+                maxTokens: nil
+            )
+        }
+        
+        // Cache the results
+        await sharedModelCache.set(key: "cohere", models: modelInfos)
+        
+        return modelInfos
     }
     
     public func generate(prompt: String) async throws -> String {

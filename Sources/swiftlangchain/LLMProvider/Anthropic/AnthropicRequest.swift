@@ -79,6 +79,7 @@ public struct AnthropicRequestBody: Codable {
     public let top_p: Double?
     public let top_k: Int?
     public let stream: Bool
+    public let tools: [AnthropicTool]?
     
     public init(
         model: String,
@@ -87,7 +88,8 @@ public struct AnthropicRequestBody: Codable {
         temperature: Double? = nil,
         topP: Double? = nil,
         topK: Int? = nil,
-        stream: Bool = false
+        stream: Bool = false,
+        tools: [AnthropicTool]? = nil
     ) {
         self.model = model
         self.messages = messages
@@ -96,6 +98,107 @@ public struct AnthropicRequestBody: Codable {
         self.top_p = topP
         self.top_k = topK
         self.stream = stream
+        self.tools = tools
+    }
+}
+
+// MARK: - Anthropic Tool Calling Structures
+
+/// Anthropic tool definition
+public struct AnthropicTool: Codable {
+    public let name: String
+    public let description: String
+    public let input_schema: AnthropicToolInputSchema
+    
+    enum CodingKeys: String, CodingKey {
+        case name, description
+        case input_schema
+    }
+}
+
+/// Anthropic tool input schema
+public struct AnthropicToolInputSchema: Codable {
+    public let type: String
+    public let properties: [String: AnthropicPropertyDefinition]?
+    public let required: [String]?
+    
+    public init(type: String = "object", properties: [String: AnthropicPropertyDefinition]? = nil, required: [String]? = nil) {
+        self.type = type
+        self.properties = properties
+        self.required = required
+    }
+}
+
+/// Anthropic property definition
+public struct AnthropicPropertyDefinition: Codable {
+    public let type: String
+    public let description: String?
+    
+    public init(type: String, description: String? = nil) {
+        self.type = type
+        self.description = description
+    }
+}
+
+/// Anthropic tool use content item
+public struct AnthropicToolUseContentItem: Codable {
+    public let type: String
+    public let id: String
+    public let name: String
+    public let input: [String: String]?
+    
+    enum CodingKeys: String, CodingKey {
+        case type, id, name, input
+    }
+    
+    public init(type: String, id: String, name: String, input: [String: String]? = nil) {
+        self.type = type
+        self.id = id
+        self.name = name
+        self.input = input
+    }
+}
+
+/// Anthropic tool result content item
+public struct AnthropicToolResultContentItem: Codable {
+    public let type: String
+    public let tool_use_id: String
+    public let content: String
+    
+    enum CodingKeys: String, CodingKey {
+        case type
+        case tool_use_id
+        case content
+    }
+    
+    public init(type: String, toolUseId: String, content: String) {
+        self.type = type
+        self.tool_use_id = toolUseId
+        self.content = content
+    }
+}
+
+// MARK: - Anthropic Models API
+
+/// Anthropic Models Response
+public struct AnthropicModelsResponse: Codable {
+    public let data: [AnthropicModel]
+}
+
+/// Anthropic Model
+public struct AnthropicModel: Codable {
+    public let id: String
+    public let name: String
+    public let displayName: String?
+    public let type: String?
+    public let contextLength: Int?
+    public let maxTokens: Int?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, type
+        case displayName = "display_name"
+        case contextLength = "context_length"
+        case maxTokens = "max_tokens"
     }
 }
 

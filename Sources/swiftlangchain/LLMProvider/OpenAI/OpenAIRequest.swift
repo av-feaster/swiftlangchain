@@ -202,6 +202,46 @@ public struct OpenAIChoice: Codable {
     }
 }
 
+/// OpenAI Choice with Tools (for function calling)
+public struct OpenAIChoiceWithTools: Codable {
+    public let index: Int
+    public let message: OpenAIMessageWithTools
+    public let finishReason: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case index, message
+        case finishReason = "finish_reason"
+    }
+}
+
+/// OpenAI Message with Tools (for function calling)
+public struct OpenAIMessageWithTools: Codable {
+    public let role: String
+    public let content: String?
+    public let toolCalls: [OpenAIToolCall]?
+    
+    public init(role: String, content: String? = nil, toolCalls: [OpenAIToolCall]? = nil) {
+        self.role = role
+        self.content = content
+        self.toolCalls = toolCalls
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case role, content
+        case toolCalls = "tool_calls"
+    }
+}
+
+/// OpenAI Response with Tools (for function calling)
+public struct OpenAIResponseWithTools: Codable {
+    public let id: String
+    public let object: String
+    public let created: Int
+    public let model: String
+    public let choices: [OpenAIChoiceWithTools]
+    public let usage: OpenAIUsage?
+}
+
 /// OpenAI Usage
 public struct OpenAIUsage: Codable {
     public let promptTokens: Int
@@ -232,6 +272,22 @@ public enum OpenAICustomError: Error {
     case custom(message: String, statusCode: Int)
 }
 
+// MARK: - OpenAI Models API
+
+/// OpenAI Models Response
+public struct OpenAIModelsResponse: Codable {
+    public let object: String
+    public let data: [OpenAIModel]
+}
+
+/// OpenAI Model
+public struct OpenAIModel: Codable {
+    public let id: String
+    public let object: String
+    public let created: Int
+    public let ownedBy: String
+}
+
 // MARK: - OpenAI Streaming Response Models
 
 /// OpenAI Streaming Chunk
@@ -259,13 +315,4 @@ public struct OpenAIStreamChoice: Codable {
 public struct OpenAIStreamDelta: Codable {
     public let role: String?
     public let content: String?
-}
-
-/// OpenAI Response with Tools (for function calling)
-public struct OpenAIResponseWithTools: Codable {
-    public let id: String
-    public let object: String
-    public let created: Int
-    public let model: String
-    public let choices: [OpenAIChoiceWithTools]
 }

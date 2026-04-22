@@ -63,6 +63,7 @@ public struct CohereMeta: Codable {
 
 public struct CohereErrorResponse: Codable {
     public let message: String
+    public let statusCode: Int?
 }
 
 public enum CohereCustomError: Error, LocalizedError {
@@ -73,5 +74,25 @@ public enum CohereCustomError: Error, LocalizedError {
         case .custom(let message, _):
             return message
         }
+    }
+}
+
+// MARK: - Cohere Models API
+
+/// Cohere Models Response
+public struct CohereModelsResponse: Codable {
+    public let models: [CohereModel]
+}
+
+/// Cohere Model
+public struct CohereModel: Codable {
+    public let id: String
+    public let name: String
+    public let contextLength: Int?
+    public let endpoints: [String]?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, endpoints
+        case contextLength = "context_length"
     }
 }

@@ -88,32 +88,3 @@ public struct OpenAIToolCall: Codable {
     }
 }
 
-/// Extended OpenAI Choice for function calling
-public struct OpenAIChoiceWithTools: Codable {
-    public let index: Int
-    public let message: OpenAIMessageWithTools
-    public let finishReason: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case index, message
-        case finishReason = "finish_reason"
-    }
-}
-
-/// Extended OpenAI Message for function calling
-public struct OpenAIMessageWithTools: Codable {
-    public let role: String
-    public let content: String?
-    public let toolCalls: [OpenAIToolCall]?
-    
-    public init(role: String, content: String? = nil, toolCalls: [OpenAIToolCall]? = nil) {
-        self.role = role
-        self.content = content
-        self.toolCalls = toolCalls
-    }
-    
-    enum CodingKeys: String, CodingKey {
-        case role, content
-        case toolCalls = "tool_calls"
-    }
-}

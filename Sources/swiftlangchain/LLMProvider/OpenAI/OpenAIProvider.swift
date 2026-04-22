@@ -8,7 +8,7 @@
 import Foundation
 
 /// OpenAI API provider implementation
-public struct OpenAIProvider: StreamingLLMProvider {
+public struct OpenAIProvider: StreamingLLMProvider, ModelFetcher {
     let apiKey: String
     let baseURL: String
     let model: String
@@ -17,6 +17,49 @@ public struct OpenAIProvider: StreamingLLMProvider {
         self.apiKey = apiKey
         self.model = model
         self.baseURL = baseURL
+    }
+    
+    /// Fetch available models from OpenAI API
+    public func fetchModels() async throws -> [ModelInfo] {
+        // Check cache first
+        if let cached = await sharedModelCache.get(key: "openai") {
+            return cached
+        }
+        
+        guard let url = URL(string: "\(baseURL)/models") else {
+            throw NetworkError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            throw NetworkError.httpError(httpResponse.statusCode, data)
+        }
+        
+        let modelsResponse = try JSONDecoder().decode(OpenAIModelsResponse.self, from: data)
+        
+        let modelInfos = modelsResponse.data.map { model in
+            ModelInfo(
+                id: model.id,
+                name: model.id,
+                description: "Owned by \(model.ownedBy)",
+                contextLength: nil,
+                maxTokens: nil
+            )
+        }
+        
+        // Cache the results
+        await sharedModelCache.set(key: "openai", models: modelInfos)
+        
+        return modelInfos
     }
     
     public func generate(prompt: String) async throws -> String {
